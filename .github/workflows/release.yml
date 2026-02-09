@@ -1,9 +1,8 @@
-name: Release
+name: Release + Sync
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: write
@@ -15,7 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Semantic Release
+      - name: Run semantic-release
+        id: semantic
         uses: cycjimmy/semantic-release-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync release with Django
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          curl -X POST "${{ secrets.DJANGO_API_URL }}" \
+            -H "Authorization: Token ${{ secrets.DJANGO_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "tag": "${{ steps.semantic.outputs.new_release_git_tag }}",
+              "name": "${{ steps.semantic.outputs.new_release_version }}",
+              "body": "${{ steps.semantic.outputs.new_release_notes }}"
+            }'
