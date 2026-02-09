@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Changelog</h1>
+        <div id="releases-container">
+            <p>Carregando releases...</p>
+        </div>
+    </div>
+
+    <script src="{% static 'js/changelog.js' %}"></script>
+</body>
+</html>

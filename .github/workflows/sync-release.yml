@@ -1,0 +1,32 @@
+name: Sync Release with Backend
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send release to Django
+        env:
+          DJANGO_API_TOKEN: ${{ secrets.DJANGO_API_TOKEN }}
+          DJANGO_API_URL: ${{ secrets.DJANGO_API_URL }}
+        run: |
+          set -e
+
+          jq -n \
+            --arg tag "${{ github.event.release.tag_name }}" \
+            --arg name "${{ github.event.release.name }}" \
+            --arg body "${{ github.event.release.body }}" \
+            --arg published_at "${{ github.event.release.published_at }}" \
+            '{
+              tag: $tag,
+              name: $name,
+              body: $body,
+              published_at: $published_at
+            }' | curl -X POST "$DJANGO_API_URL" \
+              -H "Authorization: Token $DJANGO_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data @-
