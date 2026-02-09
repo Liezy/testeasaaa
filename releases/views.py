@@ -1,5 +1,5 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .serializer import ReleaseSerializer
 from .models import Release
@@ -19,6 +19,7 @@ def sync_release(request):
     return Response(status=201)
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def latest_release(request):
     try:
         release = Release.objects.latest("published_at")
@@ -27,6 +28,7 @@ def latest_release(request):
         return Response({"detail": "Nenhum release encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def list_releases(request):
     qs = Release.objects.order_by("-published_at")
     return Response(ReleaseSerializer(qs, many=True).data)
