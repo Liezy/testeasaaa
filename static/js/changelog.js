@@ -4,6 +4,7 @@ async function fetchReleases() {
         const response = await fetch('/list');
         const releases = await response.json();
         displayReleases(releases);
+        checkForNewRelease(releases);
     } catch (error) {
         console.error('Erro ao buscar releases:', error);
         document.getElementById('releases-container').innerHTML = 
@@ -34,6 +35,39 @@ function displayReleases(releases) {
     });
 
     container.innerHTML = html;
+}
+
+function checkForNewRelease(releases) {
+    if (releases.length === 0) return;
+
+    const latestRelease = releases[0]; // assumindo que vem ordenado do mais novo para o mais antigo
+    const lastSeen = localStorage.getItem("lastSeenRelease");
+
+    if (lastSeen !== latestRelease.tag) {
+        showModal(latestRelease);
+    }
+}
+
+function showModal(release) {
+    const modal = document.createElement("div");
+    modal.id = "release-modal";
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h1>🚀 Nova Atualização ${release.name}</h1>
+            <p><strong>Publicado em:</strong> ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
+            <div class="modal-body">
+                ${release.body}
+            </div>
+            <button id="close-modal">Entendi</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById("close-modal").addEventListener("click", () => {
+        localStorage.setItem("lastSeenRelease", release.tag);
+        modal.remove();
+    });
 }
 
 // Carregar releases ao iniciar a página
