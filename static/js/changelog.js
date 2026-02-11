@@ -1,7 +1,7 @@
 // Função para buscar releases da API
 async function fetchReleases() {
     try {
-        const response = await fetch('/api/releases/');
+        const response = await fetch('/list');
         const releases = await response.json();
         displayReleases(releases);
     } catch (error) {
