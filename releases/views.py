@@ -7,8 +7,8 @@ from django.shortcuts import render
 from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
 
-def changelog(request):
-    return render(request, 'changelog.html')
+def home(request):
+    return render(request, 'home.html')
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
