@@ -45,6 +45,19 @@ function extractMajorVersion(tag) {
     return match ? parseInt(match[1]) : 0;
 }
 
+function hasPassedDays(days = 30) {
+    // Verifica se passaram X dias desde a última notificação
+    const lastNotificationDate = localStorage.getItem("lastNotificationDate");
+    if (!lastNotificationDate) return false;
+    
+    const lastDate = new Date(parseInt(lastNotificationDate));
+    const currentDate = new Date();
+    const diffTime = currentDate - lastDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays >= days;
+}
+
 function getReleasesSinceLastMajor(releases, lastSeenMajor) {
     // Retorna todos os releases até encontrar a última major version vista
     if (lastSeenMajor === 0) return releases; // primeira vez
@@ -67,14 +80,25 @@ function checkForNewRelease(releases) {
     const currentMajor = extractMajorVersion(latestRelease.tag);
     const lastSeenMajor = localStorage.getItem("lastSeenMajorVersion");
     
-    // Se for a primeira vez ou se a major version mudou
-    if (lastSeenMajor === null || currentMajor !== parseInt(lastSeenMajor)) {
-        const releasesToShow = getReleasesSinceLastMajor(releases, lastSeenMajor ? parseInt(lastSeenMajor) : 0);
-        showModal(releasesToShow, currentMajor);
+    // Se for a primeira visita, só salva sem mostrar modal
+    if (lastSeenMajor === null) {
+        localStorage.setItem("lastSeenMajorVersion", currentMajor);
+        localStorage.setItem("lastNotificationDate", new Date().getTime().toString());
+        return;
+    }
+    
+    const parsedLastSeenMajor = parseInt(lastSeenMajor);
+    const isMajorVersionChanged = currentMajor !== parsedLastSeenMajor;
+    const hasPassedThirtyDays = hasPassedDays(30);
+    
+    // Se a major version mudou OU passaram 30 dias, mostra modal
+    if (isMajorVersionChanged || hasPassedThirtyDays) {
+        const releasesToShow = getReleasesSinceLastMajor(releases, parsedLastSeenMajor);
+        showModal(releasesToShow, currentMajor, isMajorVersionChanged);
     }
 }
 
-function showModal(releases, majorVersion) {
+function showModal(releases, majorVersion, isMajorVersionChanged = true) {
     const modal = document.createElement("div");
     modal.id = "release-modal";
     modal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50";
@@ -95,14 +119,21 @@ function showModal(releases, majorVersion) {
         `;
     });
     
+    // Mensagem dinâmica baseada no tipo de notificação
+    const title = isMajorVersionChanged 
+        ? `🚀 Grandes Atualizações v${majorVersion}.0.0`
+        : `📦 Novidades disponíveis`;
+    
+    const subtitle = isMajorVersionChanged
+        ? `${releases.length > 1 
+            ? `Confira as ${releases.length} atualizações desde a última major version`
+            : 'Confira a nova major version'}`
+        : `Confira as ${releases.length} atualizações dos últimos 30 dias`;
+    
     modal.innerHTML = `
         <div class="bg-white rounded-lg shadow-2xl max-w-3xl w-full p-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">🚀 Grandes Atualizações v${majorVersion}.0.0</h1>
-            <p class="text-gray-600 mb-6">
-                ${releases.length > 1 
-                    ? `Confira as ${releases.length} atualizações desde a última major version`
-                    : 'Confira a nova major version'}
-            </p>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">${title}</h1>
+            <p class="text-gray-600 mb-6">${subtitle}</p>
             <div class="prose prose-sm text-gray-700 mb-8 max-h-96 overflow-y-auto">
                 ${releasesHtml}
             </div>
@@ -113,7 +144,10 @@ function showModal(releases, majorVersion) {
     document.body.appendChild(modal);
 
     document.getElementById("close-modal").addEventListener("click", () => {
-        localStorage.setItem("lastSeenMajorVersion", majorVersion);
+        if (isMajorVersionChanged) {
+            localStorage.setItem("lastSeenMajorVersion", majorVersion);
+        }
+        localStorage.setItem("lastNotificationDate", new Date().getTime().toString());
         modal.remove();
     });
 }
