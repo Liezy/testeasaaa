@@ -26,7 +26,7 @@ function displayReleases(releases) {
         const renderedMarkdown = marked.parse(release.body);
         const sanitizedHtml = DOMPurify.sanitize(renderedMarkdown);
         html += `
-            <div class="bg-white rounded-lg p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition">
+            <div class="bg-gray-300 rounded-lg p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition">
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">${escapeHtml(release.name)} <span class="inline-block bg-indigo-500 text-white px-3 py-1 rounded text-sm font-medium">${escapeHtml(release.tag)}</span></h2>
                 <p class="text-gray-600 text-sm mb-4">Publicado em: ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
                 <div class="prose prose-sm text-gray-700">
@@ -57,7 +57,7 @@ function showModal(release) {
     const renderedMarkdown = marked.parse(release.body);
     const sanitizedHtml = DOMPurify.sanitize(renderedMarkdown);
     modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-8">
+        <div class="bg-gray-300 rounded-lg shadow-2xl max-w-2xl w-full p-8">
             <h1 class="text-3xl font-bold text-gray-800 mb-4">🚀 Nova Atualização ${escapeHtml(release.name)}</h1>
             <p class="text-gray-600 mb-6"><strong>Publicado em:</strong> ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
             <div class="prose prose-sm text-gray-700 mb-8 max-h-96 overflow-y-auto">
