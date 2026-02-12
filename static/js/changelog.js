@@ -23,12 +23,14 @@ function displayReleases(releases) {
 
     let html = '';
     releases.forEach(release => {
+        const renderedMarkdown = marked.parse(release.body);
+        const sanitizedHtml = DOMPurify.sanitize(renderedMarkdown);
         html += `
             <div class="release-card">
-                <h2>${release.name} <span class="tag">${release.tag}</span></h2>
+                <h2>${escapeHtml(release.name)} <span class="tag">${escapeHtml(release.tag)}</span></h2>
                 <p class="date">Publicado em: ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
                 <div class="body">
-                    ${release.body}
+                    ${sanitizedHtml}
                 </div>
             </div>
         `;
@@ -51,12 +53,14 @@ function checkForNewRelease(releases) {
 function showModal(release) {
     const modal = document.createElement("div");
     modal.id = "release-modal";
+    const renderedMarkdown = marked.parse(release.body);
+    const sanitizedHtml = DOMPurify.sanitize(renderedMarkdown);
     modal.innerHTML = `
         <div class="modal-content">
-            <h1>🚀 Nova Atualização ${release.name}</h1>
+            <h1>🚀 Nova Atualização ${escapeHtml(release.name)}</h1>
             <p><strong>Publicado em:</strong> ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
             <div class="modal-body">
-                ${release.body}
+                ${sanitizedHtml}
             </div>
             <button id="close-modal">Entendi</button>
         </div>
@@ -68,6 +72,18 @@ function showModal(release) {
         localStorage.setItem("lastSeenRelease", release.tag);
         modal.remove();
     });
+}
+
+// Função utilitária para escapar HTML e evitar XSS
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
 // Carregar releases ao iniciar a página
