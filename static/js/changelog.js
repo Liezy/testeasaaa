@@ -39,29 +39,72 @@ function displayReleases(releases) {
     container.innerHTML = html;
 }
 
+function extractMajorVersion(tag) {
+    // Extrai o número da major version de uma tag como "v2.5.3" → 2
+    const match = tag.match(/v(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+}
+
+function getReleasesSinceLastMajor(releases, lastSeenMajor) {
+    // Retorna todos os releases até encontrar a última major version vista
+    if (lastSeenMajor === 0) return releases; // primeira vez
+    
+    const newReleases = [];
+    for (const release of releases) {
+        const currentMajor = extractMajorVersion(release.tag);
+        if (currentMajor < lastSeenMajor) {
+            break; // parou na versão anterior
+        }
+        newReleases.push(release);
+    }
+    return newReleases;
+}
+
 function checkForNewRelease(releases) {
     if (releases.length === 0) return;
 
     const latestRelease = releases[0]; // assumindo que vem ordenado do mais novo para o mais antigo
-    const lastSeen = localStorage.getItem("lastSeenRelease");
-
-    if (lastSeen !== latestRelease.tag) {
-        showModal(latestRelease);
+    const currentMajor = extractMajorVersion(latestRelease.tag);
+    const lastSeenMajor = localStorage.getItem("lastSeenMajorVersion");
+    
+    // Se for a primeira vez ou se a major version mudou
+    if (lastSeenMajor === null || currentMajor !== parseInt(lastSeenMajor)) {
+        const releasesToShow = getReleasesSinceLastMajor(releases, lastSeenMajor ? parseInt(lastSeenMajor) : 0);
+        showModal(releasesToShow, currentMajor);
     }
 }
 
-function showModal(release) {
+function showModal(releases, majorVersion) {
     const modal = document.createElement("div");
     modal.id = "release-modal";
     modal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50";
-    const renderedMarkdown = marked.parse(release.body);
-    const sanitizedHtml = DOMPurify.sanitize(renderedMarkdown);
+    
+    // Construir o conteúdo de todos os releases
+    let releasesHtml = '';
+    releases.forEach(release => {
+        const renderedMarkdown = marked.parse(release.body);
+        const sanitizedHtml = DOMPurify.sanitize(renderedMarkdown);
+        releasesHtml += `
+            <div class="mb-6 pb-6 border-b border-gray-300 last:border-b-0">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">${escapeHtml(release.name)} <span class="inline-block bg-indigo-500 text-white px-2 py-1 rounded text-xs font-medium">${escapeHtml(release.tag)}</span></h3>
+                <p class="text-gray-600 text-sm mb-3">Publicado em: ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
+                <div class="prose prose-sm text-gray-700">
+                    ${sanitizedHtml}
+                </div>
+            </div>
+        `;
+    });
+    
     modal.innerHTML = `
-        <div class="bg-gray-300 rounded-lg shadow-2xl max-w-2xl w-full p-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">🚀 Nova Atualização ${escapeHtml(release.name)}</h1>
-            <p class="text-gray-600 mb-6"><strong>Publicado em:</strong> ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
+        <div class="bg-white rounded-lg shadow-2xl max-w-3xl w-full p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">🚀 Grandes Atualizações v${majorVersion}.0.0</h1>
+            <p class="text-gray-600 mb-6">
+                ${releases.length > 1 
+                    ? `Confira as ${releases.length} atualizações desde a última major version`
+                    : 'Confira a nova major version'}
+            </p>
             <div class="prose prose-sm text-gray-700 mb-8 max-h-96 overflow-y-auto">
-                ${sanitizedHtml}
+                ${releasesHtml}
             </div>
             <button id="close-modal" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:-translate-y-1 transition">Entendi</button>
         </div>
@@ -70,7 +113,7 @@ function showModal(release) {
     document.body.appendChild(modal);
 
     document.getElementById("close-modal").addEventListener("click", () => {
-        localStorage.setItem("lastSeenRelease", release.tag);
+        localStorage.setItem("lastSeenMajorVersion", majorVersion);
         modal.remove();
     });
 }
