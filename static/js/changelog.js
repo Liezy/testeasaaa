@@ -23,14 +23,14 @@ function displayReleases(releases) {
 
     let html = '';
     releases.forEach(release => {
-        const renderedMarkdown = marked.parse(release.body);
-        const sanitizedHtml = DOMPurify.sanitize(renderedMarkdown);
+        // Usa o texto amigável gerado pela IA
+        const userNotes = release.user_notes || 'Nenhuma descrição disponível';
         html += `
             <div class="bg-gray-300 rounded-lg p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition">
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">${escapeHtml(release.name)} <span class="inline-block bg-indigo-500 text-white px-3 py-1 rounded text-sm font-medium">${escapeHtml(release.tag)}</span></h2>
                 <p class="text-gray-600 text-sm mb-4">Publicado em: ${new Date(release.published_at).toLocaleDateString('pt-BR')}</p>
-                <div class="prose prose-sm text-gray-700">
-                    ${sanitizedHtml}
+                <div class="prose prose-sm text-gray-700 whitespace-pre-wrap">
+                    ${escapeHtml(userNotes)}
                 </div>
             </div>
         `;

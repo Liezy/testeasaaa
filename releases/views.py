@@ -38,11 +38,17 @@ def _generate_notes(release_id):
     close_old_connections()
     try:
         release = Release.objects.get(id=release_id)
+        print(f"[IA] Processando Release #{release_id}: {release.name}")
+        
         friendly_text = generate_user_notes(release.body)
+        print(f"[IA] ✓ Texto gerado com sucesso para Release #{release_id}")
+        
         release.user_notes = friendly_text
         release.save(update_fields=["user_notes"])
+        print(f"[IA] ✓ user_notes cadastrado no banco para Release #{release_id}")
+        
     except Exception as e:
-        print("Erro IA:", e)
+        print(f"[IA] ✗ Erro ao processar Release #{release_id}: {e}")
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
