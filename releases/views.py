@@ -10,14 +10,15 @@ from django.core.exceptions import ObjectDoesNotExist
 from .services import generate_user_notes
 from django.db import close_old_connections
 from django.views.decorators.csrf import csrf_exempt
+from functools import wraps
 
 
 def home(request):
     return render(request, 'home.html')
 
-@csrf_exempt
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@csrf_exempt
 def sync_release(request):
     serializer = ReleaseSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
