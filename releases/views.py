@@ -9,11 +9,13 @@ from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
 from .services import generate_user_notes
 from django.db import close_old_connections
+from django.views.decorators.csrf import csrf_exempt
 
 
 def home(request):
     return render(request, 'home.html')
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def sync_release(request):
