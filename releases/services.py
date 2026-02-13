@@ -1,11 +1,8 @@
-from openai import OpenAI
+from groq import Groq
 from django.conf import settings
 
 def generate_user_notes(changelog_text: str) -> str:
-    client = OpenAI(
-        api_key=settings.GROQ_API_KEY,
-        base_url="https://api.groq.com/openai/v1"
-    )
+    client = Groq(api_key=settings.GROQ_API_KEY)
 
     prompt = f"""
                 Você é um assistente que escreve notas de atualização para usuários finais.
